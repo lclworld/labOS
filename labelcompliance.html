@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Label Compliance Checker — LCL LabOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --orange: #E85D04;
+  --brown: #6B3F1F;
+  --black: #111111;
+  --white: #FFFFFF;
+  --off-white: #FAF8F5;
+  --light-gray: #F0EDE8;
+  --mid-gray: #C8C2BA;
+  --red: #C0392B;
+  --red-light: #FDECEA;
+  --amber: #D68910;
+  --amber-light: #FEF9EC;
+  --green: #1E8449;
+  --green-light: #EAFAF1;
+  --border: 2px solid #111111;
+  --font: 'Poppins', sans-serif;
+}
+
+body { font-family: var(--font); background: var(--off-white); color: var(--black); min-height: 100vh; }
+
+/* ── HEADER ── */
+.site-header {
+  background: var(--black); padding: 14px 32px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: var(--border); position: sticky; top: 0; z-index: 100;
+}
+.logo-mark {
+  width: 32px; height: 32px; background: var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: var(--white);
+}
+.brand-label { font-size: 13px; font-weight: 500; color: var(--white); letter-spacing: 0.04em; }
+.brand-label span { color: var(--orange); }
+.header-sep { color: #444; margin: 0 6px; }
+.page-title { font-size: 13px; font-weight: 400; color: #888; }
+.header-right { margin-left: auto; font-size: 11px; color: #555; letter-spacing: 0.06em; }
+
+/* ── LAYOUT ── */
+.page-wrap { max-width: 860px; margin: 0 auto; padding: 48px 32px 100px; }
+
+/* ── INTRO ── */
+.intro-block {
+  border: var(--border); background: var(--white);
+  padding: 32px 36px; margin-bottom: 48px;
+}
+.intro-block h1 { font-size: 22px; font-weight: 600; color: var(--brown); margin-bottom: 8px; }
+.intro-block p { font-size: 13px; color: #666; line-height: 1.7; max-width: 560px; }
+.intro-tag {
+  display: inline-block; margin-bottom: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.16em;
+  color: var(--orange); border: 1.5px solid var(--orange);
+  padding: 3px 10px;
+}
+
+/* ── SECTION ── */
+.section { margin-bottom: 40px; }
+.section-head {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 20px; padding-bottom: 12px;
+  border-bottom: var(--border);
+}
+.section-num {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+  color: var(--orange); white-space: nowrap;
+}
+.section-title { font-size: 17px; font-weight: 500; color: var(--brown); }
+
+/* ── FIELD ── */
+.field-group { margin-bottom: 16px; }
+label.field-label {
+  display: block; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--black); margin-bottom: 7px;
+}
+input[type="text"], textarea {
+  width: 100%; padding: 11px 14px;
+  font-family: var(--font); font-size: 14px; font-weight: 400;
+  color: var(--black); background: var(--white);
+  border: var(--border); outline: none;
+}
+input[type="text"]:focus, textarea:focus { border-color: var(--orange); }
+textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+
+/* ── CHECKLIST ITEM ── */
+.check-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 16px; background: var(--white);
+  border: var(--border); margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.check-item:has(.check-yes:checked) { border-color: var(--green); }
+.check-item:has(.check-no:checked) { border-color: var(--red); }
+
+.check-question { flex: 1; font-size: 13px; font-weight: 400; color: var(--black); line-height: 1.5; }
+.check-question .q-note { display: block; font-size: 11px; color: #888; margin-top: 3px; font-style: italic; }
+
+.check-options { display: flex; gap: 8px; flex-shrink: 0; margin-top: 2px; }
+.check-btn {
+  padding: 6px 16px; font-family: var(--font);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  border: var(--border); cursor: pointer; background: var(--white);
+  transition: all 0.12s; user-select: none;
+}
+.check-btn.yes-btn { }
+.check-btn.no-btn { }
+.check-btn.yes-btn.active { background: var(--green); color: var(--white); border-color: var(--green); }
+.check-btn.no-btn.active { background: var(--red); color: var(--white); border-color: var(--red); }
+.check-btn.na-btn.active { background: var(--mid-gray); color: var(--white); border-color: var(--mid-gray); }
+
+/* sub question */
+.sub-question {
+  display: none; margin-top: 10px; padding: 12px 14px;
+  background: var(--off-white); border-left: 3px solid var(--amber);
+  font-size: 12px; color: var(--black);
+}
+.sub-question.visible { display: block; }
+.sub-question .check-options { margin-top: 8px; }
+
+/* ── TOGGLE ── */
+.toggle-wrap {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; cursor: pointer;
+}
+.toggle-wrap input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--orange); cursor: pointer; }
+.toggle-wrap span { font-size: 13px; color: #555; }
+
+/* ── FDA TOGGLE NOTE ── */
+.fda-note {
+  display: none; padding: 10px 14px; margin-top: 6px;
+  background: var(--amber-light); border-left: 3px solid var(--amber);
+  font-size: 12px; color: #7d5a00; line-height: 1.5;
+}
+.fda-note.visible { display: block; }
+
+/* ── CLAIMS SCANNER ── */
+.claims-box { position: relative; }
+.scan-btn {
+  margin-top: 12px; padding: 12px 28px;
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--black); color: var(--white);
+  border: var(--border); cursor: pointer;
+  transition: all 0.12s;
+}
+.scan-btn:hover { background: var(--brown); border-color: var(--brown); }
+
+.scan-results { display: none; margin-top: 20px; }
+.scan-results.visible { display: block; }
+
+.scan-highlight-box {
+  border: var(--border); background: var(--white);
+  padding: 20px; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8; color: var(--black);
+  white-space: pre-wrap; word-break: break-word;
+}
+.flag-red { background: #fde8e6; color: var(--red); padding: 1px 3px; font-weight: 600; border-bottom: 2px solid var(--red); }
+.flag-amber { background: var(--amber-light); color: #7d5a00; padding: 1px 3px; font-weight: 600; border-bottom: 2px solid var(--amber); }
+
+.rewrites-block { margin-top: 16px; }
+.rewrites-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--black);
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--mid-gray);
+}
+.rewrite-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 14px; margin-bottom: 8px;
+  border: 1.5px solid var(--border);
+}
+.rewrite-item.red-item { background: var(--red-light); border-color: #e8b4b0; }
+.rewrite-item.amber-item { background: var(--amber-light); border-color: #f0d89a; }
+.rewrite-flag { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; flex-shrink: 0; margin-top: 1px; }
+.rewrite-flag.red { color: var(--red); }
+.rewrite-flag.amber { color: var(--amber); }
+.rewrite-word { font-size: 13px; font-weight: 600; color: var(--black); }
+.rewrite-arrow { color: var(--mid-gray); font-size: 13px; }
+.rewrite-suggestion { font-size: 12px; color: #555; font-style: italic; margin-top: 2px; }
+.rewrite-reason { font-size: 11px; color: #888; margin-top: 3px; line-height: 1.5; }
+
+.no-flags {
+  padding: 16px; background: var(--green-light);
+  border: 1.5px solid var(--green); font-size: 13px; color: var(--green);
+  font-weight: 500;
+}
+
+/* ── RESULTS PANEL ── */
+#results-panel { display: none; margin-top: 56px; }
+#results-panel.visible { display: block; }
+
+.results-header {
+  background: var(--black); color: var(--white);
+  padding: 24px 32px; margin-bottom: 0;
+}
+.results-header .r-tag {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.16em;
+  color: var(--orange); margin-bottom: 6px; display: block;
+}
+.results-header h2 { font-size: 20px; font-weight: 500; }
+.results-header .r-meta { font-size: 12px; color: #888; margin-top: 4px; }
+
+.score-strip {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border: var(--border); border-top: none;
+  margin-bottom: 0;
+}
+.score-cell {
+  padding: 20px 24px; text-align: center;
+  border-right: var(--border);
+}
+.score-cell:last-child { border-right: none; }
+.score-cell.red-cell { background: var(--red-light); }
+.score-cell.amber-cell { background: var(--amber-light); }
+.score-cell.green-cell { background: var(--green-light); }
+.score-num { font-size: 36px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+.score-cell.red-cell .score-num { color: var(--red); }
+.score-cell.amber-cell .score-num { color: var(--amber); }
+.score-cell.green-cell .score-num { color: var(--green); }
+.score-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
+
+.action-list {
+  border: var(--border); border-top: none;
+  background: var(--white); padding: 28px 32px;
+}
+.action-list-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--black);
+  margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--light-gray);
+}
+.action-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--light-gray);
+  font-size: 13px; color: var(--black); line-height: 1.5;
+}
+.action-item:last-child { border-bottom: none; }
+.action-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 5px;
+}
+.action-dot.red { background: var(--red); }
+.action-dot.amber { background: var(--amber); }
+
+.all-clear {
+  padding: 24px; text-align: center;
+  background: var(--green-light); border: 1.5px solid var(--green);
+  font-size: 14px; font-weight: 500; color: var(--green);
+}
+
+/* ── EXPORT ── */
+.export-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin-top: 28px; padding-top: 24px;
+  border-top: var(--border);
+}
+.btn-primary {
+  padding: 13px 28px; font-family: var(--font);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; background: var(--orange);
+  color: var(--white); border: 2px solid var(--orange);
+  cursor: pointer; transition: all 0.12s;
+}
+.btn-primary:hover { background: var(--brown); border-color: var(--brown); }
+.btn-outline {
+  padding: 13px 28px; font-family: var(--font);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; background: var(--white);
+  color: var(--black); border: var(--border);
+  cursor: pointer; transition: all 0.12s;
+}
+.btn-outline:hover { background: var(--black); color: var(--white); }
+
+.run-check-wrap { margin-top: 48px; padding-top: 32px; border-top: var(--border); }
+.run-check-btn {
+  width: 100%; padding: 18px;
+  font-family: var(--font); font-size: 14px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--orange); color: var(--white);
+  border: 2px solid var(--orange); cursor: pointer;
+  transition: all 0.15s;
+}
+.run-check-btn:hover { background: var(--brown); border-color: var(--brown); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--black); color: var(--white);
+  padding: 12px 24px; font-size: 12px; font-weight: 500;
+  opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .page-wrap { padding: 28px 16px 80px; }
+  .report-header-fields { grid-template-columns: 1fr; }
+  .check-item { flex-direction: column; gap: 10px; }
+  .score-strip { grid-template-columns: 1fr; }
+  .score-cell { border-right: none; border-bottom: var(--border); }
+  .score-cell:last-child { border-bottom: none; }
+  .site-header { padding: 14px 16px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo-mark">L</div>
+  <span class="brand-label">LCL Lab<span>OS</span></span>
+  <span class="header-sep">—</span>
+  <span class="page-title">Label Compliance Checker</span>
+  <span class="header-right">Ghana FDA · Cosmetics</span>
+</header>
+
+<div class="page-wrap">
+
+  <!-- INTRO -->
+  <div class="intro-block">
+    <div class="intro-tag">Self-Service Tool</div>
+    <h1>Is your cosmetic label compliant?</h1>
+    <p>This tool checks your product label against Ghana FDA labelling requirements for cosmetics (FDA/MCH/CHC/GL-LCH/2013/03). Work through each section, paste your claims, and get a clear picture of what needs attention before you submit for registration.</p>
+  </div>
+
+  <!-- SECTION 1 — PRODUCT IDENTITY -->
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="section-num">Section 01</span>
+      <span class="section-title">Product Identity</span>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Product Name on Label</label>
+      <input type="text" id="s1-product-name" placeholder="Exactly as it appears on your label" />
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Brand Name on Label</label>
+      <input type="text" id="s1-brand-name" placeholder="e.g. Lumière Lab" />
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Generic Name of Product</label>
+      <input type="text" id="s1-generic" placeholder="e.g. Face Moisturiser, Hair Conditioner, Body Lotion" />
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Country of Origin</label>
+      <input type="text" id="s1-country" placeholder="e.g. Ghana" />
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">FDA Registration Number</label>
+      <label class="toggle-wrap" id="first-reg-toggle">
+        <input type="checkbox" id="first-reg-check" onchange="toggleFirstReg()" />
+        <span>This is a first-time registration — I don't have a number yet</span>
+      </label>
+      <input type="text" id="s1-fda-num" placeholder="e.g. FDA/REG/0000/XX/000000" />
+      <div class="fda-note" id="fda-first-note">
+        First-time registrations will receive an FDA registration number after approval. You do not need it now — but it <strong>must appear on your label</strong> before the product goes to market.
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s1-similarity" data-severity="red" data-message="Your product name closely resembles a registered product. Rename it to avoid rejection.">
+      <div class="check-question">
+        Does your product name closely resemble any already registered product?
+        <span class="q-note">A name that looks or sounds like a registered product will be rejected by Ghana FDA.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s1-similarity','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s1-similarity','no',this)">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 — INGREDIENT DECLARATION -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="section-num">Section 02</span>
+      <span class="section-title">Ingredient Declaration</span>
+    </div>
+
+    <div class="check-item" data-id="s2-listed" data-severity="red" data-message="Add a full ingredient list to your label.">
+      <div class="check-question">Are all ingredients listed on your label?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s2-listed','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s2-listed','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s2-inci" data-severity="red" data-message="Ingredients must be written using INCI (International Nomenclature of Cosmetic Ingredients) names.">
+      <div class="check-question">
+        Are your ingredients written in INCI nomenclature?
+        <span class="q-note">INCI names are the internationally standardised names for cosmetic ingredients. E.g. "Aqua" not "Water", "Butyrospermum Parkii Butter" not "Shea Butter".</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s2-inci','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s2-inci','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s2-order" data-severity="red" data-message="Reorder your ingredient list from highest to lowest concentration.">
+      <div class="check-question">
+        Are ingredients listed in descending order of concentration?
+        <span class="q-note">The ingredient present in the highest amount must appear first, down to the least.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s2-order','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s2-order','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s2-conc" data-severity="red" data-message="Each active ingredient must show its concentration or amount on the label.">
+      <div class="check-question">
+        Does each active ingredient show its concentration or amount?
+        <span class="q-note">If your product has no declared active ingredients, select N/A.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s2-conc','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s2-conc','no',this)">No</button>
+        <button class="check-btn na-btn" onclick="setCheck('s2-conc','na',this)">N/A</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s2-excip-present" data-severity="none" data-message="">
+      <div class="check-question">
+        Does your formula contain any excipients known to be a safety concern?
+        <span class="q-note">E.g. parabens, formaldehyde donors, hydroquinone, mercury compounds.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s2-excip-present','yes',this);showSub('sub-excip')">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s2-excip-present','no',this);hideSub('sub-excip')">No</button>
+      </div>
+      <div class="sub-question" id="sub-excip">
+        Are these safety-concern excipients declared on your label?
+        <div class="check-options">
+          <button class="check-btn yes-btn" onclick="setCheck('s2-excip-declared','yes',this)" data-subid="s2-excip-declared">Yes</button>
+          <button class="check-btn no-btn" onclick="setCheck('s2-excip-declared','no',this)" data-subid="s2-excip-declared">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 — MANUFACTURER -->
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="section-num">Section 03</span>
+      <span class="section-title">Manufacturer Details</span>
+    </div>
+
+    <div class="check-item" data-id="s3-name" data-severity="red" data-message="Add the manufacturer's name to your label.">
+      <div class="check-question">Is the manufacturer's name on the label?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s3-name','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s3-name','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s3-postal" data-severity="red" data-message="Add the manufacturer's postal address to your label.">
+      <div class="check-question">Is the manufacturer's postal address on the label?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s3-postal','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s3-postal','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s3-premises" data-severity="red" data-message="Add the manufacturer's physical/premises address to your label.">
+      <div class="check-question">Is the manufacturer's physical (premises) address on the label?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s3-premises','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s3-premises','no',this)">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 — DISTRIBUTOR -->
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="section-num">Section 04</span>
+      <span class="section-title">Distributor Details</span>
+    </div>
+
+    <label class="toggle-wrap" id="same-as-mfr-toggle">
+      <input type="checkbox" id="same-as-mfr" onchange="toggleSameAsMfr()" />
+      <span>Same as manufacturer — distributor details match Section 03</span>
+    </label>
+
+    <div id="dist-fields">
+      <div class="check-item" data-id="s4-name" data-severity="red" data-message="Add the distributor's name to your label.">
+        <div class="check-question">Is the distributor's name on the label?</div>
+        <div class="check-options">
+          <button class="check-btn yes-btn" onclick="setCheck('s4-name','yes',this)">Yes</button>
+          <button class="check-btn no-btn" onclick="setCheck('s4-name','no',this)">No</button>
+        </div>
+      </div>
+
+      <div class="check-item" data-id="s4-postal" data-severity="red" data-message="Add the distributor's postal address to your label.">
+        <div class="check-question">Is the distributor's postal address on the label?</div>
+        <div class="check-options">
+          <button class="check-btn yes-btn" onclick="setCheck('s4-postal','yes',this)">Yes</button>
+          <button class="check-btn no-btn" onclick="setCheck('s4-postal','no',this)">No</button>
+        </div>
+      </div>
+
+      <div class="check-item" data-id="s4-premises" data-severity="red" data-message="Add the distributor's physical/premises address to your label.">
+        <div class="check-question">Is the distributor's physical (premises) address on the label?</div>
+        <div class="check-options">
+          <button class="check-btn yes-btn" onclick="setCheck('s4-premises','yes',this)">Yes</button>
+          <button class="check-btn no-btn" onclick="setCheck('s4-premises','no',this)">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 — DATES & BATCH -->
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="section-num">Section 05</span>
+      <span class="section-title">Dates & Batch Number</span>
+    </div>
+
+    <div class="check-item" data-id="s5-mfr-date" data-severity="red" data-message="Add the date of manufacture to your label.">
+      <div class="check-question">Is the date of manufacture stated on your label?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s5-mfr-date','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s5-mfr-date','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s5-expiry" data-severity="red" data-message="Add the best before or expiry date to your label.">
+      <div class="check-question">Is the best before or expiry date stated?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s5-expiry','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s5-expiry','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s5-batch" data-severity="red" data-message="Add a batch number to your label.">
+      <div class="check-question">Is a batch number present on the label?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s5-batch','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s5-batch','no',this)">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6 — NET CONTENT -->
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="section-num">Section 06</span>
+      <span class="section-title">Net Content</span>
+    </div>
+
+    <div class="check-item" data-id="s6-net" data-severity="red" data-message="State the net content (weight or volume) clearly on your label.">
+      <div class="check-question">
+        Is the net content clearly stated on your label?
+        <span class="q-note">E.g. 50ml, 100g, 30ml.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s6-net','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s6-net','no',this)">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7 — DIRECTIONS & WARNINGS -->
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="section-num">Section 07</span>
+      <span class="section-title">Directions, Warnings & Storage</span>
+    </div>
+
+    <div class="check-item" data-id="s7-directions" data-severity="red" data-message="Include directions for use on your label.">
+      <div class="check-question">Have you included directions for use?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s7-directions','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s7-directions','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s7-warnings" data-severity="red" data-message="Include any necessary warnings or precautions on your label.">
+      <div class="check-question">Are necessary warnings or precautions included?</div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s7-warnings','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s7-warnings','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s7-storage" data-severity="red" data-message="State any special storage conditions on your label (e.g. store below 25°C, keep away from direct sunlight).">
+      <div class="check-question">
+        Are special storage conditions stated?
+        <span class="q-note">E.g. store below 25°C, keep away from direct sunlight, refrigerate after opening.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s7-storage','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s7-storage','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s7-handling" data-severity="red" data-message="Include handling precautions where applicable (e.g. avoid contact with eyes, patch test recommended).">
+      <div class="check-question">
+        Are handling precautions included where applicable?
+        <span class="q-note">E.g. avoid contact with eyes, discontinue use if irritation occurs, patch test recommended.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s7-handling','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s7-handling','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s7-indications" data-severity="red" data-message="State the indications, frequency and conditions of use on your label (e.g. use twice daily on cleansed skin).">
+      <div class="check-question">
+        Have you stated the indications, frequency, route and conditions of use?
+        <span class="q-note">E.g. apply to face twice daily after cleansing, suitable for daily use on body and hands.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s7-indications','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s7-indications','no',this)">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 8 — MANDATORY STATEMENTS -->
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="section-num">Section 08</span>
+      <span class="section-title">Mandatory Statements</span>
+    </div>
+
+    <div class="check-item" data-id="s8-children" data-severity="red" data-message='Add the statement "Keep out of reach of children" to your label. This is mandatory for all products.'>
+      <div class="check-question">
+        Does your label include <em>"Keep out of reach of children"</em>?
+        <span class="q-note">Required on all cosmetic products — no exceptions.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s8-children','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s8-children','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s8-external" data-severity="red" data-message='Add the statement "For external use only" to your label.'>
+      <div class="check-question">
+        Does your label include <em>"For external use only"</em>?
+        <span class="q-note">Required on all products intended for external use.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s8-external','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s8-external','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s8-scripture" data-severity="red" data-message="Religious scriptures, symbols or decorative marks not related to your product's function or identity may be considered false or misleading claims by Ghana FDA and will likely generate a query.">
+      <div class="check-question">
+        Does your label contain any religious scriptures, symbols, images or marks not directly related to the function or identity of your product?
+        <span class="q-note">E.g. Bible verses, Quranic text, religious icons, unrelated imagery. These may be considered false or misleading claims under Ghana FDA guidelines.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s8-scripture','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s8-scripture','no',this)">No</button>
+      </div>
+    </div>
+
+    <div class="check-item" data-id="s8-language" data-severity="red" data-message="Your label must be in English or include a full English translation.">
+      <div class="check-question">
+        Is your label in English, or does it include an English translation?
+        <span class="q-note">If the original label is in another language, a full English translation must be provided.</span>
+      </div>
+      <div class="check-options">
+        <button class="check-btn yes-btn" onclick="setCheck('s8-language','yes',this)">Yes</button>
+        <button class="check-btn no-btn" onclick="setCheck('s8-language','no',this)">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 9 — CLAIMS SCANNER -->
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="section-num">Section 09</span>
+      <span class="section-title">Claims Scanner</span>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Paste your label claims & marketing copy</label>
+      <textarea id="claims-input" placeholder="Paste all text that appears on your label — product claims, benefits, marketing copy, directions, everything. The scanner will check it for terms that Ghana FDA may classify as drug or therapeutic claims."></textarea>
+    </div>
+    <button class="scan-btn" onclick="runClaimsScanner()">Scan Claims →</button>
+
+    <div class="scan-results" id="scan-results">
+      <div class="scan-highlight-box" id="scan-highlighted"></div>
+      <div class="rewrites-block" id="rewrites-block"></div>
+    </div>
+  </div>
+
+  <!-- RUN CHECK -->
+  <div class="run-check-wrap">
+    <button class="run-check-btn" onclick="runFullCheck()">Generate Compliance Report →</button>
+  </div>
+
+  <!-- RESULTS PANEL -->
+  <div id="results-panel">
+    <div class="results-header">
+      <span class="r-tag">LCL LabOS · Label Compliance Report</span>
+      <h2 id="r-title">Compliance Report</h2>
+      <div class="r-meta" id="r-meta"></div>
+      <div style="margin-top:10px;font-size:11px;color:#aaa;line-height:1.6;">Ghana FDA will query non-compliant items before any further action — resolving these before submission avoids delays in your registration processing.</div>
+    </div>
+    <div class="score-strip">
+      <div class="score-cell red-cell">
+        <div class="score-num" id="r-red">0</div>
+        <div class="score-label">Likely to Generate a Query</div>
+      </div>
+      <div class="score-cell amber-cell">
+        <div class="score-num" id="r-amber">0</div>
+        <div class="score-label">Worth Reviewing</div>
+      </div>
+      <div class="score-cell green-cell">
+        <div class="score-num" id="r-green">0</div>
+        <div class="score-label">Compliant</div>
+      </div>
+    </div>
+    <div class="action-list" id="action-list"></div>
+    <div class="export-row">
+      <button class="btn-primary" onclick="exportPNG()">↓ Save as PNG</button>
+      <button class="btn-outline" onclick="exportPDF()">↓ Save as PDF</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────
+const checks = {}; // id → 'yes' | 'no' | null
+let sameAsMfr = false;
+let firstReg = false;
+let claimsScanDone = false;
+let claimsFlags = []; // {word, type, suggestions, reason}
+
+// ─── FLAG DICTIONARY ──────────────────────────────────────────────────────
+const RED_FLAGS = [
+  { words: ['treat','treats','treatment','treatments'], suggestions: 'address, support, target', reason: 'Implies therapeutic action — may classify product as a drug.' },
+  { words: ['repair','repairs','repairing'], suggestions: 'improve, strengthen, reinforce', reason: 'Implies corrective/medical action beyond cosmetic use.' },
+  { words: ['fix','fixes','fixing'], suggestions: 'correct, refine, improve', reason: 'Implies corrective/medical action beyond cosmetic use.' },
+  { words: ['heal','heals','healing','healed'], suggestions: 'soothe, calm, nourish', reason: 'Healing is a medical claim — not permitted on cosmetics.' },
+  { words: ['cure','cures','cured','curing'], suggestions: 'relieve, ease, comfort', reason: 'Cure is a drug claim — not permitted on cosmetics.' },
+  { words: ['restore','restores','restoring','restoration'], suggestions: 'replenish, revive, renew', reason: 'In therapeutic context, "restore" implies medical correction.' },
+  { words: ['therapeutic','therapy'], suggestions: 'beneficial, effective, active', reason: 'Therapeutic is a drug classification term.' },
+  { words: ['medicated','medication'], suggestions: 'formulated, active, enriched', reason: 'Medicated implies a drug product — not a cosmetic.' },
+  { words: ['antibacterial','anti-bacterial'], suggestions: 'cleansing, purifying, clarifying', reason: 'Antibacterial claims may classify product as a drug or household chemical.' },
+  { words: ['antifungal','anti-fungal'], suggestions: 'Remove — reposition as household chemical if applicable', reason: 'Antifungal is a drug/household chemical claim.' },
+  { words: ['anti-inflammatory','antiinflammatory'], suggestions: 'soothing, calming, comforting', reason: 'Anti-inflammatory is a medical/drug claim.' },
+  { words: ['kills bacteria','kills germs','kill bacteria','kill germs'], suggestions: 'cleanses, purifies, removes impurities', reason: 'Kills bacteria/germs is a drug/household chemical claim.' },
+  { words: ['regenerate','regenerates','regenerating','regeneration'], suggestions: 'renew, refresh, revitalise', reason: 'Regeneration implies a medical/cellular claim.' },
+  { words: ['stimulate','stimulates','stimulating'], suggestions: 'encourage, support, promote', reason: 'Stimulate in a physiological context may be considered a drug claim.' },
+];
+
+const AMBER_FLAGS = [
+  { words: ['spf','sun protection factor'], suggestions: 'Permitted — but SPF testing data must be submitted at registration.', reason: 'SPF claims are allowed on cosmetics but require SPF test results.' },
+];
+
+// ─── CHECKLIST ────────────────────────────────────────────────────────────
+function setCheck(id, val, btn) {
+  checks[id] = val;
+  const item = btn.closest('.check-item') || btn.closest('.sub-question');
+  const btns = item ? item.querySelectorAll('.check-btn') : [];
+  btns.forEach(b => { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function showSub(id) { document.getElementById(id).classList.add('visible'); }
+function hideSub(id) {
+  document.getElementById(id).classList.remove('visible');
+  // clear sub check
+  checks['s2-excip-declared'] = null;
+  document.getElementById(id).querySelectorAll('.check-btn').forEach(b => b.classList.remove('active'));
+}
+
+// ─── FDA TOGGLE ───────────────────────────────────────────────────────────
+function toggleFirstReg() {
+  firstReg = document.getElementById('first-reg-check').checked;
+  const input = document.getElementById('s1-fda-num');
+  const note = document.getElementById('fda-first-note');
+  input.style.display = firstReg ? 'none' : 'block';
+  note.classList.toggle('visible', firstReg);
+}
+
+// ─── SAME AS MFR ──────────────────────────────────────────────────────────
+function toggleSameAsMfr() {
+  sameAsMfr = document.getElementById('same-as-mfr').checked;
+  const fields = document.getElementById('dist-fields');
+  fields.style.display = sameAsMfr ? 'none' : 'block';
+  if (sameAsMfr) {
+    checks['s4-name'] = 'yes';
+    checks['s4-postal'] = 'yes';
+    checks['s4-premises'] = 'yes';
+  } else {
+    checks['s4-name'] = null;
+    checks['s4-postal'] = null;
+    checks['s4-premises'] = null;
+  }
+}
+
+// ─── CLAIMS SCANNER ───────────────────────────────────────────────────────
+function runClaimsScanner() {
+  const raw = document.getElementById('claims-input').value.trim();
+  if (!raw) { showToast('Paste your claims text first'); return; }
+
+  claimsFlags = [];
+  const foundWords = new Set();
+
+  // collect all flags
+  function checkFlags(flagList, type) {
+    flagList.forEach(entry => {
+      entry.words.forEach(w => {
+        const regex = new RegExp('\\b' + escapeRegex(w) + '\\b', 'gi');
+        if (regex.test(raw) && !foundWords.has(w.toLowerCase())) {
+          foundWords.add(w.toLowerCase());
+          claimsFlags.push({ word: w, matchWord: w, type, suggestions: entry.suggestions, reason: entry.reason });
+        }
+      });
+    });
+  }
+
+  checkFlags(RED_FLAGS, 'red');
+  checkFlags(AMBER_FLAGS, 'amber');
+
+  // build highlighted HTML
+  let highlighted = raw;
+  const allEntries = [
+    ...RED_FLAGS.map(e => ({ ...e, type: 'red' })),
+    ...AMBER_FLAGS.map(e => ({ ...e, type: 'amber' })),
+  ];
+
+  // sort by length desc to avoid partial replacements
+  const allWords = [];
+  allEntries.forEach(e => e.words.forEach(w => allWords.push({ w, type: e.type })));
+  allWords.sort((a, b) => b.w.length - a.w.length);
+
+  allWords.forEach(({ w, type }) => {
+    const cls = type === 'red' ? 'flag-red' : 'flag-amber';
+    const regex = new RegExp('\\b(' + escapeRegex(w) + ')\\b', 'gi');
+    highlighted = highlighted.replace(regex, `<mark class="${cls}">$1</mark>`);
+  });
+
+  document.getElementById('scan-highlighted').innerHTML = highlighted;
+
+  // build rewrites
+  const rwBlock = document.getElementById('rewrites-block');
+  if (claimsFlags.length === 0) {
+    rwBlock.innerHTML = '<div class="no-flags">✓ No flagged terms found in your claims. Your copy looks clean.</div>';
+  } else {
+    let html = '<div class="rewrites-title">Suggested Rewrites</div>';
+    claimsFlags.forEach(f => {
+      html += `
+        <div class="rewrite-item ${f.type}-item">
+          <span class="rewrite-flag ${f.type}">${f.type.toUpperCase()}</span>
+          <div>
+            <div class="rewrite-word">"${f.word}" <span class="rewrite-arrow">→</span> <span class="rewrite-suggestion">${f.suggestions}</span></div>
+            <div class="rewrite-reason">${f.reason}</div>
+          </div>
+        </div>`;
+    });
+    rwBlock.innerHTML = html;
+  }
+
+  document.getElementById('scan-results').classList.add('visible');
+  claimsScanDone = true;
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ─── FULL CHECK ───────────────────────────────────────────────────────────
+function runFullCheck() {
+  const brand = document.getElementById('s1-brand-name').value.trim() || 'Brand Name';
+  const product = document.getElementById('s1-product-name').value.trim() || 'Product Name';
+
+  // set title
+  document.getElementById('r-title').textContent = brand + ' — ' + product;
+  document.getElementById('r-meta').textContent = 'Generated ' + new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) + ' · Ghana FDA Cosmetics Label Guidelines';
+
+  const actions = [];
+  let redCount = 0, amberCount = 0, greenCount = 0;
+  let totalChecks = 0;
+
+  // all check items
+  const checkItems = document.querySelectorAll('.check-item[data-id]');
+  checkItems.forEach(item => {
+    const id = item.dataset.id;
+    const severity = item.dataset.severity;
+    const message = item.dataset.message;
+
+    // skip distributor if same as mfr
+    if (sameAsMfr && (id === 's4-name' || id === 's4-postal' || id === 's4-premises')) {
+      greenCount++; totalChecks++; return;
+    }
+    // skip sub excip if not applicable
+    if (id === 's2-excip-declared' && checks['s2-excip-present'] !== 'yes') return;
+    // skip s1-similarity red if answered no
+    if (id === 's1-similarity') {
+      totalChecks++;
+      if (checks[id] === 'yes') { redCount++; actions.push({ color: 'red', msg: message }); }
+      else if (checks[id] === 'no') { greenCount++; }
+      else { amberCount++; actions.push({ color: 'amber', msg: 'Answer whether your product name resembles a registered product.' }); }
+      return;
+    }
+
+    totalChecks++;
+    const val = checks[id];
+    if (val === 'yes' || val === 'na') {
+      greenCount++;
+    } else if (val === 'no') {
+      if (severity === 'red') { redCount++; actions.push({ color: 'red', msg: message }); }
+      else if (severity === 'amber') { amberCount++; actions.push({ color: 'amber', msg: message }); }
+    } else {
+      // unanswered
+      amberCount++;
+      actions.push({ color: 'amber', msg: 'Not answered: ' + item.querySelector('.check-question').childNodes[0].textContent.trim() });
+    }
+  });
+
+  // FDA number
+  if (!firstReg) {
+    const fdaNum = document.getElementById('s1-fda-num').value.trim();
+    totalChecks++;
+    if (fdaNum) { greenCount++; }
+    else { redCount++; actions.push({ color: 'red', msg: 'Add your FDA registration number to the label.' }); }
+  } else {
+    amberCount++;
+    actions.push({ color: 'amber', msg: 'FDA registration number: you are registered as first-time. Ensure this number appears on the label before the product goes to market.' });
+  }
+
+  // claims
+  if (claimsScanDone && claimsFlags.length > 0) {
+    claimsFlags.forEach(f => {
+      if (f.type === 'red') { redCount++; actions.push({ color: 'red', msg: 'Claims: "' + f.word + '" — ' + f.reason + ' Try: ' + f.suggestions }); }
+      else { amberCount++; actions.push({ color: 'amber', msg: 'Claims: "' + f.word + '" — ' + f.reason }); }
+    });
+  } else if (!claimsScanDone) {
+    amberCount++;
+    actions.push({ color: 'amber', msg: 'Claims not scanned — paste your label copy into Section 09 and run the scanner.' });
+  }
+
+  // update scores
+  document.getElementById('r-red').textContent = redCount;
+  document.getElementById('r-amber').textContent = amberCount;
+  document.getElementById('r-green').textContent = greenCount;
+
+  // build action list
+  const al = document.getElementById('action-list');
+  if (actions.length === 0) {
+    al.innerHTML = '<div class="all-clear">✓ No issues found. Your label appears to meet Ghana FDA requirements — you are unlikely to receive queries on submission.</div>';
+  } else {
+    let html = '<div class="action-list-title">Items to Address Before Submission</div>';
+    actions.forEach(a => {
+      html += `<div class="action-item"><span class="action-dot ${a.color}"></span><span>${a.msg}</span></div>`;
+    });
+    al.innerHTML = html;
+  }
+
+  const panel = document.getElementById('results-panel');
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────
+async function exportPNG() {
+  showToast('Generating PNG…');
+  const panel = document.getElementById('results-panel');
+  const canvas = await html2canvas(panel, { scale: 2, useCORS: true, backgroundColor: '#FAF8F5' });
+  const link = document.createElement('a');
+  link.download = 'label-compliance-report.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('PNG saved!');
+}
+
+async function exportPDF() {
+  showToast('Generating PDF…');
+  const panel = document.getElementById('results-panel');
+  const canvas = await html2canvas(panel, { scale: 2, useCORS: true, backgroundColor: '#FAF8F5' });
+  const imgData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width / 2, canvas.height / 2] });
+  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+  pdf.save('label-compliance-report.pdf');
+  showToast('PDF saved!');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
