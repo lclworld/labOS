@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Batch Yield Calculator — LCL LabOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #F4720B;
+    --orange-light: #FFF0E5;
+    --orange-mid: #FDDCC4;
+    --brown: #3B1F0E;
+    --brown-mid: #7A4828;
+    --black: #0D0D0D;
+    --white: #FFFFFF;
+    --grey: #F5F2EF;
+    --border: #0D0D0D;
+    --shadow: 4px 4px 0px #0D0D0D;
+    --shadow-lg: 6px 6px 0px #0D0D0D;
+    --radius: 4px;
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--grey);
+    color: var(--black);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    max-width: 640px;
+    margin: 0 auto 32px;
+    text-align: center;
+  }
+
+  .header-eyebrow {
+    display: inline-block;
+    background: var(--brown);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    
+    padding: 4px 12px;
+    border: 2px solid var(--black);
+    
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    font-size: clamp(26px, 6vw, 38px);
+    font-weight: 600;
+    color: var(--brown);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .header h1 span {
+    color: var(--orange);
+    display: block;
+  }
+
+  .header p {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--brown-mid);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--white);
+    border: 2.5px solid var(--border);
+    
+    border-radius: var(--radius);
+    max-width: 640px;
+    margin: 0 auto 20px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: var(--brown);
+    color: var(--white);
+    padding: 14px 24px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-header .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--orange);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .card-body {
+    padding: 24px;
+  }
+
+  /* ── Form ── */
+  .field-group {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .field-group.single {
+    grid-template-columns: 1fr;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brown);
+    margin-bottom: 6px;
+  }
+
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--black);
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    
+    outline: none;
+    
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="number"]:focus,
+  select:focus {
+    
+    border-color: var(--orange);
+    transform: translate(-1px, -1px);
+  }
+
+  .select-wrap {
+    position: relative;
+  }
+
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--brown);
+    pointer-events: none;
+  }
+
+  select { cursor: pointer; padding-right: 30px; }
+
+  .field-narrow { width: 110px; }
+  .field-narrow select { width: 110px; }
+
+  .divider {
+    height: 2px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--orange-mid) 0px,
+      var(--orange-mid) 8px,
+      transparent 8px,
+      transparent 14px
+    );
+    margin: 6px 0 20px;
+  }
+
+  /* ── Calculate button ── */
+  .btn-calculate {
+    width: 100%;
+    padding: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    
+    color: var(--white);
+    background: var(--orange);
+    border: 2.5px solid var(--black);
+    border-radius: var(--radius);
+    
+    cursor: pointer;
+    
+  }
+
+  .btn-calculate:hover {
+    
+    transform: translate(2px, 2px);
+  }
+
+  .btn-calculate:active {
+    
+    transform: translate(4px, 4px);
+  }
+
+  /* ── Results ── */
+  .results-card {
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 420px) {
+    .results-grid { grid-template-columns: 1fr; }
+  }
+
+  .result-tile {
+    background: var(--grey);
+    border: 2px solid var(--black);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    
+  }
+
+  .result-tile.highlight {
+    background: var(--orange-light);
+    border-color: var(--orange);
+    
+  }
+
+  .result-tile.highlight-brown {
+    background: var(--brown);
+    border-color: var(--black);
+  }
+
+  .result-tile.highlight-brown .tile-label { color: var(--orange-mid); }
+  .result-tile.highlight-brown .tile-value { color: var(--white); }
+
+  .tile-label {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    
+    color: var(--brown-mid);
+    margin-bottom: 4px;
+  }
+
+  .tile-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--brown);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .tile-value .unit-tag {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--brown-mid);
+    margin-left: 2px;
+  }
+
+  /* ── Tip box ── */
+  .tip-box {
+    background: var(--orange-mid);
+    border: 2px solid var(--black);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    
+    margin-top: 4px;
+  }
+
+  .tip-label {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    
+    color: var(--brown);
+    margin-bottom: 6px;
+  }
+
+  .tip-text {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--brown);
+    line-height: 1.65;
+  }
+
+  /* ── Export ── */
+  .export-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-export {
+    flex: 1;
+    min-width: 140px;
+    padding: 13px 16px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    
+    border: 2px solid var(--black);
+    border-radius: var(--radius);
+    cursor: pointer;
+    
+    
+  }
+
+  .btn-export:hover {
+    box-shadow: 1px 1px 0 var(--black);
+    transform: translate(2px, 2px);
+  }
+
+  .btn-export:active {
+    
+    transform: translate(3px, 3px);
+  }
+
+  .btn-print {
+    background: var(--white);
+    color: var(--brown);
+  }
+
+  .btn-save {
+    background: var(--brown);
+    color: var(--white);
+  }
+
+  /* ── Error ── */
+  .error-msg {
+    display: none;
+    background: #FFF0F0;
+    border: 2px solid #D9000A;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #D9000A;
+    margin-top: 12px;
+    box-shadow: 2px 2px 0 #D9000A;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 640px;
+    margin: 28px auto 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--brown-mid);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .footer strong { color: var(--brown); }
+
+  /* ── Print styles ── */
+  @media print {
+    body { background: white; padding: 0; }
+    .card { box-shadow: none !important; border: 1.5px solid #ccc !important; }
+    .btn-calculate, .export-row, .card:first-of-type { display: none !important; }
+    .results-card { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-eyebrow">LCL LabOS · Production Tools</div>
+  <h1>Batch Yield <span>Calculator</span></h1>
+  <p>Know your unit count, overage, and cost per fill before you start production.</p>
+</div>
+
+<!-- Input Card -->
+<div class="card" id="input-card">
+  <div class="card-header"><span class="dot"></span>Batch Parameters</div>
+  <div class="card-body">
+
+    <!-- Total quantity -->
+    <div class="field-group">
+      <div>
+        <label for="qty">Total product quantity to make</label>
+        <input type="number" id="qty" placeholder="e.g. 500" min="0.01" step="any" />
+      </div>
+      <div class="field-narrow">
+        <label for="qty-unit">Unit</label>
+        <div class="select-wrap">
+          <select id="qty-unit">
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="oz">oz</option>
+            <option value="lb">lb</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Cost -->
+    <div class="field-group">
+      <div>
+        <label for="cost">Cost of bulk product</label>
+        <input type="number" id="cost" placeholder="e.g. 350" min="0" step="any" />
+      </div>
+      <div class="field-narrow">
+        <label for="currency">Currency</label>
+        <div class="select-wrap">
+          <select id="currency">
+            <option value="GHS">GHS</option>
+            <option value="USD">USD</option>
+            <option value="GBP">GBP</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Fill size -->
+    <div class="field-group">
+      <div>
+        <label for="fill">Container fill size</label>
+        <input type="number" id="fill" placeholder="e.g. 50" min="0.01" step="any" />
+      </div>
+      <div class="field-narrow">
+        <label for="fill-unit">Fill unit</label>
+        <div class="select-wrap">
+          <select id="fill-unit">
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="oz">oz</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-msg" class="error-msg">Please fill in all fields with valid positive numbers.</div>
+
+    <button class="btn-calculate" onclick="calculate()">Calculate Batch →</button>
+
+  </div>
+</div>
+
+<!-- Results Card -->
+<div class="card results-card" id="results-card">
+  <div class="card-header"><span class="dot"></span>Batch Results</div>
+  <div class="card-body">
+
+    <div class="results-grid">
+      <div class="result-tile">
+        <div class="tile-label">Base Unit Count</div>
+        <div class="tile-value" id="res-base-jars">—</div>
+      </div>
+      <div class="result-tile">
+        <div class="tile-label">Estimated Loss (5%)</div>
+        <div class="tile-value" id="res-overage">—</div>
+      </div>
+      <div class="result-tile">
+        <div class="tile-label">Realistic Usable Quantity</div>
+        <div class="tile-value" id="res-total-with-overage">—</div>
+      </div>
+      <div class="result-tile highlight">
+        <div class="tile-label">Realistic Unit Count</div>
+        <div class="tile-value" id="res-realistic-jars">—</div>
+      </div>
+    </div>
+
+    <div class="results-grid" style="grid-template-columns: 1fr;">
+      <div class="result-tile highlight-brown">
+        <div class="tile-label">Cost Per Fill</div>
+        <div class="tile-value" id="res-cost-per-fill">—</div>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-label">💡 Why 5% Overage?</div>
+      <div class="tip-text" id="res-tip">—</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Export Card -->
+<div class="card" id="export-card" style="display:none;">
+  <div class="card-header"><span class="dot"></span>Export Results</div>
+  <div class="card-body">
+    <div class="export-row">
+      <button class="btn-export btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+      <button class="btn-export btn-save" onclick="saveAsHTML()">⬇ Save as File</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <strong>LCL LabOS</strong> · Lueur Cosmetics Lab Services · Production Calculator v1.0
+</div>
+
+<script>
+  const currencySymbols = { GHS: '₵', USD: '$', GBP: '£', EUR: '€' };
+
+  function fmt(n, decimals = 2) {
+    return parseFloat(n.toFixed(decimals)).toLocaleString('en-US', { minimumFractionDigits: decimals });
+  }
+
+  function calculate() {
+    const qty      = parseFloat(document.getElementById('qty').value);
+    const qtyUnit  = document.getElementById('qty-unit').value;
+    const cost     = parseFloat(document.getElementById('cost').value);
+    const currency = document.getElementById('currency').value;
+    const fill     = parseFloat(document.getElementById('fill').value);
+    const fillUnit = document.getElementById('fill-unit').value;
+    const errEl    = document.getElementById('error-msg');
+
+    // Validation
+    if (!qty || !cost || !fill || qty <= 0 || fill <= 0 || cost < 0) {
+      errEl.style.display = 'block';
+      document.getElementById('results-card').style.display = 'none';
+      document.getElementById('export-card').style.display = 'none';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    // Calculations
+    const baseJars        = qty / fill;
+    const loss            = qty * 0.05;
+    const usableQty       = qty - loss;
+    const realisticJars   = Math.floor(usableQty / fill);
+    const costPerFill     = realisticJars > 0 ? cost / realisticJars : 0;
+    const sym             = currencySymbols[currency] || currency;
+
+    // Populate results
+    document.getElementById('res-base-jars').innerHTML =
+      `${fmt(baseJars, 1)} <span class="unit-tag">units</span>`;
+
+    document.getElementById('res-overage').innerHTML =
+      `${fmt(loss, 2)} <span class="unit-tag">${qtyUnit}</span>`;
+
+    document.getElementById('res-total-with-overage').innerHTML =
+      `${fmt(usableQty, 2)} <span class="unit-tag">${qtyUnit}</span>`;
+
+    document.getElementById('res-realistic-jars').innerHTML =
+      `${realisticJars} <span class="unit-tag">units</span>`;
+
+    document.getElementById('res-cost-per-fill').innerHTML =
+      `${sym}${fmt(costPerFill)} <span class="unit-tag">per fill</span>`;
+
+    const tipText = `Buying ${qty} ${qtyUnit} of bulk product doesn't mean you'll fill ${Math.ceil(qty / fill)} units. In reality, about 5% (${fmt(loss, 1)} ${qtyUnit}) is lost to transfers, equipment residue, and small fill inconsistencies. That leaves you with roughly ${fmt(usableQty, 1)} ${qtyUnit} of usable product — enough for ${realisticJars} units at ${fill} ${fillUnit} each. Plan your orders around the realistic number, not the theoretical one.`;
+
+    document.getElementById('res-tip').textContent = tipText;
+
+    // Show results + export
+    const resultsCard = document.getElementById('results-card');
+    const exportCard  = document.getElementById('export-card');
+    resultsCard.style.display = 'block';
+    exportCard.style.display  = 'block';
+    resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function saveAsHTML() {
+    const qty      = document.getElementById('qty').value;
+    const qtyUnit  = document.getElementById('qty-unit').value;
+    const cost     = document.getElementById('cost').value;
+    const currency = document.getElementById('currency').value;
+    const fill     = document.getElementById('fill').value;
+    const fillUnit = document.getElementById('fill-unit').value;
+
+    const baseJars  = document.getElementById('res-base-jars').innerText;
+    const overage   = document.getElementById('res-overage').innerText;
+    const totalOv   = document.getElementById('res-total-with-overage').innerText;
+    const realJars  = document.getElementById('res-realistic-jars').innerText;
+    const cpf       = document.getElementById('res-cost-per-fill').innerText;
+    const tip       = document.getElementById('res-tip').innerText;
+    const now       = new Date().toLocaleString();
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Batch Results — LCL LabOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+body{font-family:'Poppins',sans-serif;background:#F5F2EF;padding:40px 24px;color:#0D0D0D;}
+h1{font-size:28px;font-weight:900;color:#3B1F0E;margin-bottom:4px;}
+.sub{font-size:12px;color:#7A4828;margin-bottom:32px;}
+table{width:100%;border-collapse:collapse;margin-bottom:24px;}
+th,td{border:2px solid #0D0D0D;padding:12px 16px;text-align:left;font-size:13px;}
+th{background:#3B1F0E;color:#fff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.08em;}
+.highlight{background:#FFF0E5;font-weight:700;}
+.big{font-size:16px;font-weight:900;color:#3B1F0E;}
+.tip{background:#FDDCC4;border:2px solid #0D0D0D;padding:16px;font-size:12.5px;line-height:1.7;color:#3B1F0E;}
+.tip strong{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.footer{margin-top:32px;font-size:11px;color:#7A4828;}
+</style></head><body>
+<h1>Batch Yield Results</h1>
+<div class="sub">LCL LabOS · Generated ${now}</div>
+<table>
+<tr><th>Input</th><th>Value</th></tr>
+<tr><td>Total Quantity</td><td>${qty} ${qtyUnit}</td></tr>
+<tr><td>Material Cost</td><td>${cost} ${currency}</td></tr>
+<tr><td>Fill Size</td><td>${fill} ${fillUnit}</td></tr>
+</table>
+<table>
+<tr><th>Output</th><th>Result</th></tr>
+<tr><td>Base Unit Count</td><td>${baseJars}</td></tr>
+<tr><td>Estimated Loss (5%)</td><td>${overage}</td></tr>
+<tr><td>Realistic Usable Quantity</td><td>${totalOv}</td></tr>
+<tr class="highlight"><td>Realistic Unit Count</td><td class="big">${realJars}</td></tr>
+<tr class="highlight"><td>Cost Per Fill</td><td class="big">${cpf}</td></tr>
+</table>
+<div class="tip"><strong>💡 Why 5% Overage?</strong>${tip}</div>
+<div class="footer">Lueur Cosmetics Lab Services · LCL LabOS Production Tools</div>
+</body></html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `LCL-BatchResults-${Date.now()}.html`;
+    a.click();
+  }
+
+  // Allow Enter key to trigger calculate
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') calculate();
+  });
+</script>
+</body>
+</html>
